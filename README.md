@@ -5,6 +5,7 @@ Basically, I started to write a commercial error log plugin for Delphi, then I n
 
 ## Features:
 DebugEngine has a lot of functions and utilities allowing to you to do for example:
+- Support x86 and x64 architecture.
 - Accessing Delphi debug info.
 - Delphi map parsing and map converter to binary format.
 - Remove and restore Delphi debug info from PE file.
