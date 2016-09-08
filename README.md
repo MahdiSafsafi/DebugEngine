@@ -23,7 +23,7 @@ DebugEngine has a lot of functions and utilities allowing to you to do for examp
 - ...
 
 ## Getting started:
-Please refer to the Wiki page and see Demo included with the library. 
+Please refer to the [Wiki page](https://github.com/MahdiSafsafi/DebugEngine/wiki) and see Demo included with the library. 
 Note that all public functions are documented (XML doc). However if you don't understand something, please feel free to contact me.
 
 
