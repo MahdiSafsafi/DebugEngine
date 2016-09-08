@@ -8,13 +8,13 @@ DebugEngine has a lot of functions and utilities allowing to you to do for examp
 - Accessing Delphi debug info.
 - Delphi map parsing and map converter to binary format.
 - Remove and restore Delphi debug info from PE file.
+- Smart [stack trace](https://github.com/MahdiSafsafi/DebugEngine/wiki/Stack-trace).
+- Try blocks trace.
 - Updatting resource of Delphi app even if it was linked with debug info.
 - Inserting custom debug info into PE file.
 - CPU registers snapshot.
 - Accessing vector registers.
 - Disasm and comment function with Debug info.
-- Smart stack trace.
-- Try blocks trace.
 - Enumerating exception handlers.
 - Delphi exception stack trace hook.
 - Delphi string detection.
