@@ -603,7 +603,8 @@ begin
     P := Ins.NextInst; // Next instruction.
 
     { Avoid memory leaks => Destroy strings. }
-    FinalizeRecord(@DisasmInfo, TypeInfo(TDisasmInfo));
+    //FinalizeRecord(@DisasmInfo, TypeInfo(TDisasmInfo));
+    Finalize(DisasmInfo);
   end;
 
   Result := True;

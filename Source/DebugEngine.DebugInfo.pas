@@ -1669,7 +1669,8 @@ begin
     P := FExportList[I];
     if Assigned(P) then
     begin
-      FinalizeRecord(P, TypeInfo(TExportInfo));
+      //FinalizeRecord(P, TypeInfo(TExportInfo));
+      Finalize(PExportInfo(P)^);
       Dispose(FExportList[I]);
     end;
   end;
