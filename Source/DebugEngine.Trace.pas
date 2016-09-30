@@ -309,6 +309,7 @@ uses
   UnivDisasm.Cnsts.Instructions,
   UnivDisasm.Cnsts.Regs,
 {$ENDIF CPUX86}
+  UnivDisasm.Syntax.NilSyntax,
   DebugEngine.Disasm;
 
 resourcestring
@@ -372,6 +373,7 @@ var
 begin
   Ins := TInstruction.Create;
   Ins.Arch := CPUX;
+  Ins.Syntax:=SX_NIL_SYNTAX;
   Ins.Addr := CallAddress;
   Disasm(@Ins);
   Ins.Free;
@@ -398,6 +400,7 @@ begin
       Break;
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
+    Ins.Syntax:=SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     P := Ins.NextInst;
@@ -431,6 +434,7 @@ begin
       Break;
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
+    Ins.Syntax:=SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     Ins.Free;
@@ -1618,6 +1622,7 @@ procedure TCallTrace32.RemoveSealedCalls;
       Inc(n);
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
+      Ins.Syntax:=SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
@@ -1668,6 +1673,7 @@ procedure TCallTrace32.RemoveSealedCalls;
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
+      Ins.Syntax:=SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
@@ -1848,6 +1854,7 @@ procedure TCallTrace32.RemoveSealedCalls;
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
+      Ins.Syntax:=SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
@@ -2122,6 +2129,7 @@ procedure TCallTrace32.UnwindStack(OnlyEbp: Boolean);
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
+      Ins.Syntax:=SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;

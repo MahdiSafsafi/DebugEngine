@@ -108,6 +108,7 @@ uses
   UnivDisasm.Cnsts,
   UnivDisasm.Cnsts.Regs,
   UnivDisasm.Cnsts.Instructions,
+  UnivDisasm.Syntax.NilSyntax,
   DebugEngine.DebugInfo,
   DebugEngine.MemoryHack;
 
@@ -128,6 +129,7 @@ begin
     Dec(PByte(CallerAddress));
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
+    Ins.Syntax := SX_NIL_SYNTAX;
     Ins.Addr := CallerAddress;
     Disasm(@Ins);
     Ins.Free;
@@ -155,6 +157,7 @@ begin
   begin
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
+    Ins.Syntax := SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     Ins.Free;
@@ -181,6 +184,7 @@ begin
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
+      Ins.Syntax := SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Inc(P);
@@ -211,6 +215,7 @@ begin
       Break;
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
+    Ins.Syntax := SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     Ins.Free;
@@ -238,6 +243,7 @@ begin
       Break;
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
+    Ins.Syntax := SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     Ins.Free;
@@ -310,6 +316,7 @@ begin
         { Limit the disasm call => Handle it last. }
         Ins := TInstruction.Create;
         Ins.Arch := CPUX;
+        Ins.Syntax := SX_NIL_SYNTAX;
         Ins.Addr := PByte(Address);
         Disasm(@Ins);
         Ins.Free;
@@ -332,6 +339,7 @@ begin
         { Limit the disasm call => Handle it last. }
         Ins := TInstruction.Create;
         Ins.Arch := CPUX;
+        Ins.Syntax := SX_NIL_SYNTAX;
         Ins.Addr := PByte(Address);
         Tmp := PByteArray(Ins.NextInst);
         if (Ins.InstID = INST_ID_JMP) and ((Tmp^[0] or Tmp^[1] = $CC) or (Tmp^[0] or Tmp^[1] = $90)) then
@@ -603,7 +611,7 @@ begin
     P := Ins.NextInst; // Next instruction.
 
     { Avoid memory leaks => Destroy strings. }
-    //FinalizeRecord(@DisasmInfo, TypeInfo(TDisasmInfo));
+    // FinalizeRecord(@DisasmInfo, TypeInfo(TDisasmInfo));
     Finalize(DisasmInfo);
   end;
 
