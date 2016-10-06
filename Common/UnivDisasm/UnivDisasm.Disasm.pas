@@ -468,7 +468,7 @@ function Disasm(PInst: PInstruction): ShortInt;
 var
   P: PByte;
 begin
-  Result := 0;
+  // Result := 0;
   PInst^.AddressMode := DefAddressMode[PInst^.Arch];
   PInst^.NextInst := PInst^.Addr;
   PInst^.InternalData.OpSizeY := SIZE_DWORD;
