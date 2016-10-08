@@ -66,7 +66,7 @@ begin
     Item.Info.Address := LExceptionAddress;
     SL.Add(LogCall(@Item));
     StackTrace := TCallTrace.Create;
-    StackTrace.Options:= [soUseFirstCallOnEbp,soRebuildBrokenEbpChain,soDropCurrentEbpChain];
+    StackTrace.Options:= [soUseFirstCallOnEbp{,soRebuildBrokenEbpChain,soDropCurrentEbpChain}];
     try
       StackTrace.StackInfo := StackInfo;
       StackTrace.Trace;
