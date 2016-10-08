@@ -34,7 +34,6 @@ uses
   System.SysUtils,
   System.Classes,
   System.ZLib,
-  System.Generics.Collections,
   System.RegularExpressions;
 
 const
@@ -148,6 +147,14 @@ type
   end;
 
   PRuntimeSegment = ^TRuntimeSegment;
+
+  TLineNumberSource = record
+    Line: PSMapLineNumber;
+    Source: PSMapSourceLocation;
+  end;
+
+  PLineNumberSource = ^TLineNumberSource;
+
 {$ENDREGION 'MapTypes'}
   TModule = class;
   TDebugInfoBase = class;
@@ -278,12 +285,11 @@ type
     FRTSegments: TList;
     FUnits: TList;
     FSymbols: TList;
-    FLines: TList;
-    FLineSourceLocationDic: TDictionary<PSMapLineNumber, PSMapSourceLocation>;
+    FLineSources: TList;
     function GetRTSegmentFromSegIndex(SegIndex: Integer): PRuntimeSegment;
     function GetRTSegmentFromAddress(Address: Pointer): PRuntimeSegment;
     function GetUnit(Address: Pointer; PRtSeg: PRuntimeSegment): PSMapUnit;
-    function GetLineNumber(Address: Pointer; PRtSeg: PRuntimeSegment): PSMapLineNumber;
+    function GetLineNumberSource(Address: Pointer; PRtSeg: PRuntimeSegment): PLineNumberSource;
   protected
     function UnZip: Boolean;
     function ProcessMap: Boolean; override;
@@ -1390,8 +1396,7 @@ begin
   FRTSegments := TList.Create;
   FUnits := TList.Create;
   FSymbols := TList.Create;
-  FLines := TList.Create;
-  FLineSourceLocationDic := TDictionary<PSMapLineNumber, PSMapSourceLocation>.Create;
+  FLineSources := TList.Create;
 end;
 
 destructor TDebugInfoSMap.Destroy;
@@ -1405,8 +1410,12 @@ begin
   FRTSegments.Free;
   FUnits.Free;
   FSymbols.Free;
-  FLines.Free;
-  FLineSourceLocationDic.Free;
+
+  for I := 0 to FLineSources.Count - 1 do
+    if Assigned(FLineSources[I]) then
+      Dispose(FLineSources[I]);
+  FLineSources.Free;
+
   inherited;
 end;
 
@@ -1432,7 +1441,7 @@ var
   PRtSeg: PRuntimeSegment;
   PSymbol: PSMapSymbol;
   PUnit: PSMapUnit;
-  PLineNumber: PSMapLineNumber;
+  PLineSource: PLineNumberSource;
   PSourceLocation: PSMapSourceLocation;
   SymbolAddress: Pointer;
   I: Integer;
@@ -1466,11 +1475,11 @@ begin
         end;
         if Mask = aimSymbolName then
           Exit;
-        PLineNumber := GetLineNumber(Address, PRtSeg);
-        if Assigned(PLineNumber) then
+        PLineSource := GetLineNumberSource(Address, PRtSeg);
+        if Assigned(PLineSource) then
         begin
-          Info.LineNumber := PLineNumber^.LineNumber;
-          PSourceLocation := FLineSourceLocationDic[PLineNumber];
+          Info.LineNumber := PLineSource^.Line^.LineNumber;
+          PSourceLocation := PLineSource^.Source;
           Info.SourceLocation := string(PSMapChar(@PSourceLocation^.SourceLocation[0]));
           SetLength(Info.SourceLocation, PSourceLocation^.SourceLocationLength);
         end;
@@ -1480,16 +1489,18 @@ begin
   end;
 end;
 
-function TDebugInfoSMap.GetLineNumber(Address: Pointer; PRtSeg: PRuntimeSegment): PSMapLineNumber;
+function TDebugInfoSMap.GetLineNumberSource(Address: Pointer; PRtSeg: PRuntimeSegment): PLineNumberSource;
 var
   LineNumberAddress: NativeUInt;
+  I: Integer;
 begin
-  for Result in FLineSourceLocationDic.Keys do
+  for I := FLineSources.Count - 1 downto 0 do
   begin
-    with Result^, PRtSeg^ do
+    Result := FLineSources[I];
+    if Result^.Source^.SegId = PRtSeg^.SegId then
     begin
-      LineNumberAddress := NativeUInt(SegStartAddress) + Offset;
-      if (FLineSourceLocationDic[Result]^.SegId = SegId) and (LineNumberAddress < NativeUInt(SegEndAddress)) and (LineNumberAddress = NativeUInt(Address)) then
+      LineNumberAddress := NativeUInt(PRtSeg^.SegStartAddress) + Result^.Line^.Offset;
+      if NativeUInt(Address) >= NativeUInt(LineNumberAddress) then
         Exit;
     end;
   end;
@@ -1538,6 +1549,13 @@ begin
   Result := nil;
 end;
 
+function LineSortCompare(Item1, Item2: Pointer): Integer;
+begin
+  Result := NativeUInt(PLineNumberSource(Item1)^.Source^.SegId) - NativeUInt(PLineNumberSource(Item2)^.Source^.SegId);
+  if Result = 0 then
+    Result := NativeUInt(PLineNumberSource(Item1)^.Line^.Offset) - NativeUInt(PLineNumberSource(Item2)^.Line^.Offset);
+end;
+
 function TDebugInfoSMap.ProcessMap: Boolean;
 var
   LModuleImageBase: NativeUInt;
@@ -1569,7 +1587,9 @@ var
   PSymbol: PSMapSymbol;
   PSource: PSMapSourceLocation;
   PLine: PSMapLineNumber;
-  I: Integer; Options: TSMapOptions;
+  PLineSource: PLineNumberSource;
+  I: Integer;
+  Options: TSMapOptions;
 begin
   LModuleImageBase := FModule.ImageBase;
   PHeader := FMapStream.Memory;
@@ -1609,13 +1629,16 @@ begin
     begin
       for J := 1 to PSource^.NumberOfLineNumbers do
       begin
-        FLines.Add(PLine);
-        FLineSourceLocationDic.Add(PLine, PSource);
+        New(PLineSource);
+        PLineSource^.Line := PLine;
+        PLineSource^.Source := PSource;
+        FLineSources.Add(PLineSource);
         Inc(PLine);
       end;
       PSource := Pointer(PLine);
       PLine := PSMapLineNumber(PByte(PSource) + SizeOf(TSMapSourceLocation) + PSource^.SourceLocationLength);
     end;
+    FLineSources.Sort(LineSortCompare);
   end;
   Result := True;
 end;
@@ -1669,7 +1692,7 @@ begin
     P := FExportList[I];
     if Assigned(P) then
     begin
-      //FinalizeRecord(P, TypeInfo(TExportInfo));
+      // FinalizeRecord(P, TypeInfo(TExportInfo));
       Finalize(PExportInfo(P)^);
       Dispose(FExportList[I]);
     end;

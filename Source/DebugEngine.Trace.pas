@@ -25,7 +25,8 @@ unit DebugEngine.Trace;
 interface
 
 { TODO:
-  - Support call's line number. }
+  - Support call's line number. => DONE.
+}
 
 {$I DebugEngine.inc}
 { .$DEFINE DEVMODE }
@@ -373,7 +374,7 @@ var
 begin
   Ins := TInstruction.Create;
   Ins.Arch := CPUX;
-  Ins.Syntax:=SX_NIL_SYNTAX;
+  Ins.Syntax := SX_NIL_SYNTAX;
   Ins.Addr := CallAddress;
   Disasm(@Ins);
   Ins.Free;
@@ -400,7 +401,7 @@ begin
       Break;
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
-    Ins.Syntax:=SX_NIL_SYNTAX;
+    Ins.Syntax := SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     P := Ins.NextInst;
@@ -434,7 +435,7 @@ begin
       Break;
     Ins := TInstruction.Create;
     Ins.Arch := CPUX;
-    Ins.Syntax:=SX_NIL_SYNTAX;
+    Ins.Syntax := SX_NIL_SYNTAX;
     Ins.Addr := P;
     Disasm(@Ins);
     Ins.Free;
@@ -523,12 +524,23 @@ var
   LSymbolName: string;
 {$IFDEF DEVMODE}
   LSymbolAddress: Pointer;
+{$ELSE !DEVMODE}
+  LineNumber: Cardinal;
+  RelLineNumber: Integer;
+  SLineNumber: string;
+  SRelLineNumber: string;
+  SourceFile: string;
 {$ENDIF DEVMODE}
 begin
 {$IFDEF DEVMODE}
   LSymbolAddress := nil;
+{$ELSE !DEVMODE}
+  LineNumber := 0;
+  SLineNumber := EmptyStr;
+  SRelLineNumber := EmptyStr;
+  SourceFile := EmptyStr;
 {$ENDIF DEVMODE}
-  if GetAddressInfo(PItem^.Info.Address, LInfo, aimSymbolName) then
+  if GetAddressInfo(PItem^.Info.Address, LInfo {$IFDEF DEVMODE}, aimSymbolName{$ELSE !DEVMODE} {$ENDIF DEVMODE}) then
   begin
     if Assigned(LInfo.DebugSource) and Assigned(LInfo.DebugSource.Module) then
       LBaseName := LInfo.DebugSource.Module.BaseName
@@ -538,6 +550,9 @@ begin
     LSymbolName := LInfo.SymbolName;
 {$IFDEF DEVMODE}
     LSymbolAddress := LInfo.SymbolAddress;
+{$ELSE !DEVMODE}
+    LineNumber := LInfo.LineNumber;
+    SourceFile := LInfo.SourceLocation;
 {$ENDIF DEVMODE}
   end else begin
     LBaseName := '??';
@@ -551,7 +566,16 @@ begin
   if PItem^.OutOfRange then
     Result := Result + '**';
 {$ELSE !DEVMODE}
-  Result := Format('$%p    %s    %s    %s', [PItem^.CallAddress, LBaseName, LUnitName, LSymbolName]);
+  if LineNumber > 0 then
+  begin
+    SLineNumber := IntToStr(LineNumber);
+    if GetAddressInfo(PItem^.Info.ProcedureAddress, LInfo) then
+    begin
+      RelLineNumber := LineNumber - LInfo.LineNumber;
+      SRelLineNumber := '+' + IntToStr(RelLineNumber);
+    end;
+  end;
+  Result := Format('$%p    %s    %s    %s    %s    %s    %s', [PItem^.CallAddress, LBaseName, LUnitName, SourceFile, SLineNumber, SRelLineNumber, LSymbolName]);
 {$ENDIF DEVMODE}
 end;
 
@@ -1622,7 +1646,7 @@ procedure TCallTrace32.RemoveSealedCalls;
       Inc(n);
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
-      Ins.Syntax:=SX_NIL_SYNTAX;
+      Ins.Syntax := SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
@@ -1673,7 +1697,7 @@ procedure TCallTrace32.RemoveSealedCalls;
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
-      Ins.Syntax:=SX_NIL_SYNTAX;
+      Ins.Syntax := SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
@@ -1854,7 +1878,7 @@ procedure TCallTrace32.RemoveSealedCalls;
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
-      Ins.Syntax:=SX_NIL_SYNTAX;
+      Ins.Syntax := SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
@@ -2129,7 +2153,7 @@ procedure TCallTrace32.UnwindStack(OnlyEbp: Boolean);
         Break;
       Ins := TInstruction.Create;
       Ins.Arch := CPUX;
-      Ins.Syntax:=SX_NIL_SYNTAX;
+      Ins.Syntax := SX_NIL_SYNTAX;
       Ins.Addr := P;
       Disasm(@Ins);
       Ins.Free;
