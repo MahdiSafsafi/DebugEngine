@@ -1023,11 +1023,13 @@ var
 begin
   Result := False;
   LastEbpItemIndex := GetLastEbpItemIndex;
+  if LastEbpItemIndex < 0 then
+    Exit;
+
   MainFramesList := TList.Create;
   SubFramesList := TList.Create;
+
   try
-    if LastEbpItemIndex < 0 then
-      Exit;
     for I := LastEbpItemIndex + 1 to FCalls.Count - 1 do
     begin
       PItem := FCalls[I];
@@ -1068,6 +1070,7 @@ begin
     begin
       Dispose(SubFramesList[I]);
     end;
+
     MainFramesList.Free;
     SubFramesList.Free;
   end;
