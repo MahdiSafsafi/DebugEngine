@@ -241,6 +241,7 @@ type
     /// All descendants class must implement this function.
     /// </summary>
     function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; virtual; abstract;
+    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; virtual; abstract;
     constructor Create(Module: TModule); virtual;
     destructor Destroy; override;
     property Module: TModule read FModule;
@@ -261,6 +262,7 @@ type
   protected
     procedure CreateExportList;
   public
+    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
     function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; override;
     function GetAddressFromIndex(Index: Integer): Pointer;
     constructor Create(Module: TModule); override;
@@ -294,6 +296,7 @@ type
     function UnZip: Boolean;
     function ProcessMap: Boolean; override;
   public
+    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
     function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; override;
     function GetAddressFromIndex(Index: Integer): Pointer;
     constructor Create(Module: TModule); override;
@@ -304,6 +307,7 @@ type
   private
     FModulesList: TList;
     function GetModuleFromAddress(Address: Pointer): TModule;
+    function GetModuleFromModuleHandle(ModuleHandle: THandle; RegisterNoExists: Boolean): TModule;
   protected
     function AddModule(ModuleHandle: THandle): TModule;
   public
@@ -410,6 +414,8 @@ function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream; Options: TSMapOpt
 /// <returns> If the function succeeds, the return value is True.
 /// </returns>
 function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TAddressInfoMask = aimNone): Boolean;
+
+function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
 
 {$ENDREGION 'PublicFunctions'}
 // ------------------------------------------------------------------------------------
@@ -532,6 +538,24 @@ begin
       // Do nothing.
     end;
     Result := False;
+  finally
+    TMonitor.Exit(GlobalLock);
+  end;
+end;
+
+function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
+var
+  Module: TModule;
+begin
+  Result := nil;
+  if ModuleHandle = 0 then
+    ModuleHandle := GetModuleHandle(nil);
+  TMonitor.Enter(GlobalLock);
+  try
+    NeedGlobalModules;
+    Module := GlobalModules.GetModuleFromModuleHandle(ModuleHandle, True);
+    if Assigned(Module) then
+      Result := Module.DebugInfo.GetSymbolAddress(UnitName, SymbolName);
   finally
     TMonitor.Exit(GlobalLock);
   end;
@@ -1534,6 +1558,44 @@ begin
   Result := nil;
 end;
 
+function TDebugInfoSMap.GetSymbolAddress(const UnitName, SymbolName: string): Pointer;
+var
+  I: Integer;
+  PSymbol: PSMapSymbol;
+  S: string;
+  PUnit: PSMapUnit;
+  RtSeg: PRuntimeSegment;
+begin
+  Result := nil;
+  for I := 0 to FSymbols.Count - 1 do
+  begin
+    PSymbol := FSymbols[I];
+    S := string(PSMapChar(@PSymbol^.SymbolName[0]));
+    if SameText(S, SymbolName) then
+    begin
+      RtSeg := GetRTSegmentFromSegIndex(PSymbol^.SymbolSegId);
+      if Assigned(RtSeg) then
+      begin
+        Result := Pointer(NativeUInt(RtSeg^.SegStartAddress) + PSymbol^.SymbolOffset);
+        if UnitName <> EmptyStr then
+        begin
+          PUnit := GetUnit(Result, RtSeg);
+          if Assigned(PUnit) then
+          begin
+            S := string(PSMapChar(@PUnit^.UnitName[0]));
+            if not SameText(S, UnitName) then
+            begin
+              Result := nil;
+              Continue;
+            end;
+          end;
+        end;
+      end;
+      Exit;
+    end;
+  end;
+end;
+
 function TDebugInfoSMap.GetUnit(Address: Pointer; PRtSeg: PRuntimeSegment): PSMapUnit;
 var
   I: Integer;
@@ -1716,7 +1778,8 @@ var
   P: PDWORD;
   ExportSize: DWORD;
   nFunctions: DWORD;
-  nNames: DWORD; I: Integer;
+  nNames: DWORD;
+  I: Integer;
 begin
   NtHeaders := PeMapImageNtHeaders(Pointer(FModule.ModuleHandle));
   ExportSize := NtHeaders^.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
@@ -1803,6 +1866,20 @@ begin
   Result := False;
 end;
 
+function TDebugInfoExport.GetSymbolAddress(const UnitName, SymbolName: string): Pointer;
+var
+  I: Integer;
+  PExport: PExportInfo;
+begin
+  for I := 0 to FExportList.Count - 1 do
+  begin
+    PExport := FExportList[I];
+    if SameText(PExport^.Name, SymbolName) then
+      Exit(PExport^.Address);
+  end;
+  Result := nil;
+end;
+
 { TModules }
 
 constructor TModules.Create;
@@ -1829,9 +1906,15 @@ end;
 function TModules.GetModuleFromAddress(Address: Pointer): TModule;
 var
   ModuleHandle: THandle;
-  I: Integer;
 begin
   ModuleHandle := GetModuleHandleFromAddress(Address);
+  Result := GetModuleFromModuleHandle(ModuleHandle, True);
+end;
+
+function TModules.GetModuleFromModuleHandle(ModuleHandle: THandle; RegisterNoExists: Boolean): TModule;
+var
+  I: Integer;
+begin
   if ModuleHandle = 0 then
     Exit(nil);
   for I := 0 to FModulesList.Count - 1 do
@@ -1840,7 +1923,10 @@ begin
     if Result.ModuleHandle = ModuleHandle then
       Exit;
   end;
-  Result := AddModule(ModuleHandle);
+  if RegisterNoExists then
+    Result := AddModule(ModuleHandle)
+  else
+    Result := nil;
 end;
 
 {$ENDREGION 'DebugInfo'}
