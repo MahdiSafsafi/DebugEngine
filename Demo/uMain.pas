@@ -31,6 +31,7 @@ type
     BtnRemoveDbgInfo: TButton;
     BtnVectorSnap: TButton;
     BtnTest: TButton;
+    BtnSymAddr: TButton;
     procedure BtnStackTraceClick(Sender: TObject);
     procedure BtnTryTraceClick(Sender: TObject);
     procedure BtnLegRegSnapClick(Sender: TObject);
@@ -42,6 +43,7 @@ type
     procedure BtnVectorSnapClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure BtnTestClick(Sender: TObject);
+    procedure BtnSymAddrClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -146,6 +148,32 @@ begin
   end;
 end;
 
+procedure TMain.BtnSymAddrClick(Sender: TObject);
+  procedure LogSymbolAddress(Module: THandle; const UnitName, SymbolName: string);
+  var
+    P: Pointer;
+  begin
+    P := GetSymbolAddress(Module, UnitName, SymbolName);
+    LogMem.Lines.Add(Format('Address of "%s" = $%p', [SymbolName, P]));
+  end;
+
+begin
+  LogMem.Clear;
+
+  { Object method }
+  LogSymbolAddress(0, '', 'TMain.BtnSymAddrClick');
+
+  { Private variable }
+  LogSymbolAddress(0, 'System', 'MemoryManager');
+
+  { Private method }
+  LogSymbolAddress(0, '', 'SetExceptionHandler');
+
+  { Windows api }
+  LogSymbolAddress(GetModuleHandle(user32), '', 'MessageBoxA');
+  LogSymbolAddress(GetModuleHandle(user32), '', 'DrawTextW');
+end;
+
 procedure TMain.BtnTestClick(Sender: TObject);
 var
   P: PDWORD;
@@ -214,7 +242,8 @@ begin
 end;
 
 function EnumTryCallBack(var Info: TTryBlockInfo; UserData: Pointer): Boolean;
-var LInfo: TAddressInfo;
+var
+  LInfo: TAddressInfo;
 begin
   with Info, TMemo(UserData).Lines do
   begin
@@ -248,10 +277,17 @@ begin
 end;
 
 procedure TMain.BtnLegRegSnapClick(Sender: TObject);
-var Registers: TLegacyRegisters; LCntx: TRttiContext; LRegistersType: TRttiType;
-  LAsRegisterType: TRttiType; LRegisterFields: TArray<TRttiField>; LRegisterField: TRttiField; LAsRegisterField: TRttiField;
-
-  S: String; P: NativeUInt; Value: TValue;
+var
+  Registers: TLegacyRegisters;
+  LCntx: TRttiContext;
+  LRegistersType: TRttiType;
+  LAsRegisterType: TRttiType;
+  LRegisterFields: TArray<TRttiField>;
+  LRegisterField: TRttiField;
+  LAsRegisterField: TRttiField;
+  S: String;
+  P: NativeUInt;
+  Value: TValue;
 begin
   LogMem.Clear;
   LogMem.Lines.BeginUpdate;
@@ -296,7 +332,8 @@ begin
 end;
 
 procedure DisasmCallBack(var Info: TDisasmInfo; UserData: Pointer);
-var S: String;
+var
+  S: String;
 begin
   with TMemo(UserData).Lines, Info do
   begin
@@ -308,7 +345,8 @@ begin
 end;
 
 procedure TMain.BtnDisasmClick(Sender: TObject);
-var P: Pointer;
+var
+  P: Pointer;
 begin
   P := nil;
   LogMem.Clear;
@@ -321,7 +359,9 @@ begin
 end;
 
 procedure TMain.BtnAddrInfoClick(Sender: TObject);
-var Info: TAddressInfo; P: Pointer;
+var
+  Info: TAddressInfo;
+  P: Pointer;
 begin
   LogMem.Clear;
   P := @TMain.BtnAddrInfoClick;

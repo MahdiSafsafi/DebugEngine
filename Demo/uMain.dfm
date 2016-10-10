@@ -90,7 +90,7 @@ object Main: TMain
     end
     object BtnInsertDbgInfo: TButton
       Left = 199
-      Top = 53
+      Top = 85
       Width = 163
       Height = 25
       Caption = 'Insert debug info'
@@ -108,7 +108,7 @@ object Main: TMain
     end
     object BtnRemoveDbgInfo: TButton
       Left = 199
-      Top = 85
+      Top = 116
       Width = 163
       Height = 25
       Caption = 'Remove debug info'
@@ -123,6 +123,15 @@ object Main: TMain
       Caption = 'Test exception'
       TabOrder = 9
       OnClick = BtnTestClick
+    end
+    object BtnSymAddr: TButton
+      Left = 199
+      Top = 54
+      Width = 163
+      Height = 25
+      Caption = 'Address of symbol'
+      TabOrder = 10
+      OnClick = BtnSymAddrClick
     end
   end
 end
