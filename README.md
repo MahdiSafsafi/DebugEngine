@@ -7,6 +7,7 @@ Basically, I started to write a commercial error log plugin for Delphi, then I n
 DebugEngine has a lot of functions and utilities allowing to you to do for example:
 - Support x86 and x64 architecture.
 - Accessing Delphi debug info.
+- [Getting address of symbol from its name](https://github.com/MahdiSafsafi/DebugEngine/wiki/Getting-started#getting-address-of-symbol).
 - Delphi map parsing and map converter to binary format.
 - Remove and restore Delphi debug info from PE file.
 - Smart [stack trace](https://github.com/MahdiSafsafi/DebugEngine/wiki/Stack-trace).
