@@ -13,7 +13,7 @@ DebugEngine has a lot of functions and utilities allowing to you to do for examp
 - Smart [stack trace](https://github.com/MahdiSafsafi/DebugEngine/wiki/Stack-trace).
 - Try blocks trace.
 - Updatting resource of Delphi app even if it was linked with debug info.
-- Inserting custom debug info into PE file.
+- [Inserting custom debug info into PE file](https://github.com/MahdiSafsafi/DebugEngine/wiki/Getting-started#linking-smap-file-into-your-executable).
 - CPU registers snapshot.
 - Accessing vector registers.
 - [Disasm and comment function with Debug info](https://github.com/MahdiSafsafi/DebugEngine/wiki/Getting-started#disasm-and-comment-function).
