@@ -415,6 +415,22 @@ function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream; Options: TSMapOpt
 /// </returns>
 function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TAddressInfoMask = aimNone): Boolean;
 
+/// <summary> Retrieve address of symbol from symbol name.
+/// </summary>
+/// <param name="ModuleHandle"> Module handle where the symbol is located.
+/// </param>
+/// <param name="UnitName"> Unit name where the symbol was declared.
+/// </param>
+/// <param name="SymbolName"> Symbol name.
+/// </param>
+/// <returns> If the function succeeds, the return value is the address of the symbol. Otherwise it returns nil.
+/// </returns>
+/// <remarks>
+/// <para> If <c>ModuleHandle</c> was not specified (0), the function will use the current module handle.
+/// </para>
+/// <para> <c>UnitName</c> parameter is optional. It's useful when the symbol is declared in more than unit.
+/// </para>
+/// </remarks>
 function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
 
 {$ENDREGION 'PublicFunctions'}
