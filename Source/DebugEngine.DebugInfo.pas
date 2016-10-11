@@ -434,6 +434,12 @@ function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TA
 /// </remarks>
 function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
 
+/// <summary> Retrieve next symbol address from the current symbol address.
+/// </summary>
+/// <param name="Address"> Address of the current symbol.
+/// </param>
+/// <returns> If the function succeeds, the return value is the next address of the current symbol. Otherwise it returns nil.
+/// </returns>
 function GetNextSymbolAddress(Address: Pointer): Pointer;
 
 {$ENDREGION 'PublicFunctions'}
