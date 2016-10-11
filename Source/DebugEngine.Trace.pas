@@ -481,24 +481,6 @@ begin
 end;
 
 {$ENDIF CPUX86}
-
-function GetNextFunctionAddress(Address: Pointer): Pointer;
-var
-  Info: TAddressInfo;
-begin
-  if GetAddressInfo(Address, Info, aimAddress) and (Assigned(Info.DebugSource)) then
-  begin
-    if (Info.DebugSource is TDebugInfoExport) then
-      Result := TDebugInfoExport(Info.DebugSource).GetAddressFromIndex(Info.ExportIndex + 1)
-    else if (Info.DebugSource is TDebugInfoSMAP) then
-      Result := TDebugInfoSMAP(Info.DebugSource).GetAddressFromIndex(Info.ExportIndex + 1)
-    else
-      Result := nil;
-    Exit;
-  end;
-  Result := nil;
-end;
-
 {$ENDREGION 'Misc'}
 
 procedure ClearStackTraceError;
@@ -1543,7 +1525,7 @@ begin
           Info.Address := CallAddress;
           Info.ProcedureAddress := LInfo.SymbolAddress;
           Info.DebugSource := LInfo.DebugSource;
-          Info.ExportIndex := LInfo.ExportIndex;
+          Info.ExportIndex := LInfo.SymbolIndex;
           if not IsAddressInFunctionBody(CallAddress, Info.ProcedureAddress) then
             Flags := SIF_OUT_OF_RANGE;
         end else begin
@@ -2008,9 +1990,9 @@ begin
             Application.ProcessMessages use ebp register for another
             purpose. Fortunately, each valid function must restore
             the stack pointer and base pointer register to allow the
-            caller to work correctly. An it happens that the caller
+            caller to work correctly. And it happens that the caller
             pushes the ebp register before calling the target function.
-            So, ebp value should be found return address + 4 byte. }
+            So, ebp value should be found on : return address + 4 byte. }
 
           PFrame := Pointer(NativeUInt(PItem^.StackPtr) + SizeOf(Pointer));
           if not ValidFrame(PFrame) then
@@ -2023,9 +2005,9 @@ begin
 
       if I > 0 then
       begin
-        Max := GetNextFunctionAddress(P);
+        Max := GetNextSymbolAddress(P);
         { Check if sub calls are valid.
-          At least one of them, it's return
+          At least one of them, its return
           address exists. }
         if not ValidSubCalls(P, Max, PItem^.cIndex) then
         begin

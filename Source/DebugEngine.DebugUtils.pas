@@ -397,7 +397,7 @@ begin
               However, Delphi does not follow this rule, it treats DebugDirectoryEntry.Size
               as it was the number of debug directories !
 
-              2-Also, it seems that Delphi add a null DWORD value after each debug directory.
+              2-Also, it seems that Delphi adds a null DWORD value after each debug directory.
               So we use an InternalDebugData to store old VirtualAddress,PointerToRawData and Size of debug section.
               We use the Size to set the number of directories and
               we use the VirtualAddress,PointerToRawData to apply

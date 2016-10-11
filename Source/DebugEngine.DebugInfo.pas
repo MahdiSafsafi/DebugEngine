@@ -167,7 +167,7 @@ type
     UnitName: string;
     SourceLocation: string;
     DebugSource: TDebugInfoBase;
-    ExportIndex: Integer;
+    SymbolIndex: Integer; // Export Index.
   end;
 
   PAddressInfo = ^TAddressInfo;
@@ -242,6 +242,7 @@ type
     /// </summary>
     function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; virtual; abstract;
     function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; virtual; abstract;
+    function GetAddressFromIndex(Index: Integer): Pointer; virtual; abstract;
     constructor Create(Module: TModule); virtual;
     destructor Destroy; override;
     property Module: TModule read FModule;
@@ -264,7 +265,7 @@ type
   public
     function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
     function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; override;
-    function GetAddressFromIndex(Index: Integer): Pointer;
+    function GetAddressFromIndex(Index: Integer): Pointer; override;
     constructor Create(Module: TModule); override;
     destructor Destroy; override;
   end;
@@ -296,9 +297,9 @@ type
     function UnZip: Boolean;
     function ProcessMap: Boolean; override;
   public
-    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
     function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; override;
-    function GetAddressFromIndex(Index: Integer): Pointer;
+    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
+    function GetAddressFromIndex(Index: Integer): Pointer; override;
     constructor Create(Module: TModule); override;
     destructor Destroy; override;
   end;
@@ -432,6 +433,8 @@ function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TA
 /// </para>
 /// </remarks>
 function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
+
+function GetNextSymbolAddress(Address: Pointer): Pointer;
 
 {$ENDREGION 'PublicFunctions'}
 // ------------------------------------------------------------------------------------
@@ -577,6 +580,18 @@ begin
   end;
 end;
 
+function GetNextSymbolAddress(Address: Pointer): Pointer;
+var
+  Info: TAddressInfo;
+begin
+  if GetAddressInfo(Address, Info, aimAddress) and (Assigned(Info.DebugSource)) then
+  begin
+    Result := Info.DebugSource.GetAddressFromIndex(Info.SymbolIndex + 1);
+    Exit;
+  end;
+  Result := nil;
+end;
+
 {$REGION 'Misc'}
 
 function MapLocationToStr(Location: TMapLocation): string;
@@ -718,8 +733,7 @@ begin
   begin
     S := FLines[I];
     if S.Trim.IsEmpty then
-      Continue;
-    // KeepProcess Next valid line.
+      Continue; // KeepProcess Next valid line.
 
     case Notification of
       mnSegments: goto ProcessSegmentsLabel;
@@ -1016,8 +1030,7 @@ begin
           Inc(LCurrPos);
         end;
       end;
-      Inc(PSegment);
-      // Next segment.
+      Inc(PSegment); // Next segment.
       NextBeginOfLine;
     until LCurrPos^ <> '0';
   end;
@@ -1502,7 +1515,7 @@ begin
         FillChar(Info, SizeOf(Info), #00);
         Info.DebugSource := Self;
         Info.SymbolAddress := SymbolAddress;
-        Info.ExportIndex := I;
+        Info.SymbolIndex := I;
         if Mask = aimAddress then
           Exit;
         Info.SymbolName := string(PSMapChar(@PSymbol^.SymbolName[0]));
@@ -1868,7 +1881,7 @@ begin
         FillChar(Info, SizeOf(Info), #00);
         Info.DebugSource := Self;
         Info.SymbolAddress := ExportInfo^.Address;
-        Info.ExportIndex := I;
+        Info.SymbolIndex := I;
         if Mask = aimAddress then
           Exit;
         if ExportInfo^.Name.IsEmpty then
