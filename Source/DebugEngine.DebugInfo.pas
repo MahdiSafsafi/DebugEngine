@@ -442,6 +442,14 @@ function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: str
 /// </returns>
 function GetNextSymbolAddress(Address: Pointer): Pointer;
 
+/// <summary> Retrieve the size of a function in bytes.
+/// </summary>
+/// <param name="Address"> Address of the function.
+/// </param>
+/// <returns> If the function succeeds, the return value is the size of function (opcodes size). Otherwise it returns 0.
+/// </returns>
+function GetSizeOfFunction(Address: Pointer): Integer;
+
 {$ENDREGION 'PublicFunctions'}
 // ------------------------------------------------------------------------------------
 {$REGION 'MiscFunctions'}
@@ -473,6 +481,7 @@ end;
 {$ENDREGION 'InternalDebugUtils'}
 {$REGION 'GLOBAL'}
 const
+  PAGE_EXECUTE_MASK = PAGE_EXECUTE or PAGE_EXECUTE_READ or PAGE_EXECUTE_READWRITE or PAGE_EXECUTE_WRITECOPY;
   { Regular expressions patterns used by TCustomTxtMapParser }
 
   HintSegmentRegExPattern = '^\s*Start\s+Length\s+Name\s+Class\s*$';
@@ -596,6 +605,24 @@ begin
     Exit;
   end;
   Result := nil;
+end;
+
+function GetSizeOfFunction(Address: Pointer): Integer;
+var
+  mbi: TMemoryBasicInformation;
+  NextAddress: Pointer;
+begin
+  { SizeOfFunction = NextAdjacentAddress - StartAddress of the function. }
+  if (VirtualQuery(Address, mbi, SizeOf(TMemoryBasicInformation)) > 0) and (mbi.Protect and PAGE_EXECUTE_MASK <> $00) then
+  begin
+    NextAddress := GetNextSymbolAddress(Address);
+    if Assigned(NextAddress) then
+    begin
+      Result := NativeUInt(NextAddress) - NativeUInt(Address);
+      Exit;
+    end;
+  end;
+  Result := 0;
 end;
 
 {$REGION 'Misc'}
