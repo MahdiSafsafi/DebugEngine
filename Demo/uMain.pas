@@ -32,6 +32,7 @@ type
     BtnVectorSnap: TButton;
     BtnTest: TButton;
     BtnSymAddr: TButton;
+    BtnSizeOfProc: TButton;
     procedure BtnStackTraceClick(Sender: TObject);
     procedure BtnTryTraceClick(Sender: TObject);
     procedure BtnLegRegSnapClick(Sender: TObject);
@@ -44,6 +45,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure BtnTestClick(Sender: TObject);
     procedure BtnSymAddrClick(Sender: TObject);
+    procedure BtnSizeOfProcClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -146,6 +148,14 @@ begin
     YMMList.Free;
     ZMMList.Free;
   end;
+end;
+
+procedure TMain.BtnSizeOfProcClick(Sender: TObject);
+var
+  Size: Integer;
+begin
+  Size := GetSizeOfFunction(@TMain.BtnSizeOfProcClick);
+  LogMem.Text := Format('Size of TMain.BtnSizeOfProcClick = %d byte.', [Size]);
 end;
 
 procedure TMain.BtnSymAddrClick(Sender: TObject);

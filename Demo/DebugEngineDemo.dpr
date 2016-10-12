@@ -24,7 +24,8 @@ uses
   UnivDisasm.Syntax.UnivSyntax in '..\Common\UnivDisasm\UnivDisasm.Syntax.UnivSyntax.pas',
   UnivDisasm.Syntax.Utils in '..\Common\UnivDisasm\UnivDisasm.Syntax.Utils.pas',
   UnivDisasm.SyntaxManager in '..\Common\UnivDisasm\UnivDisasm.SyntaxManager.pas',
-  UnivDisasm.Utils in '..\Common\UnivDisasm\UnivDisasm.Utils.pas';
+  UnivDisasm.Utils in '..\Common\UnivDisasm\UnivDisasm.Utils.pas',
+  DebugEngine.ThreadUtils in '..\Source\DebugEngine.ThreadUtils.pas';
 
 {$R *.res}
 

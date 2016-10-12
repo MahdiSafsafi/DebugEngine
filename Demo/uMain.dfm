@@ -133,5 +133,14 @@ object Main: TMain
       TabOrder = 10
       OnClick = BtnSymAddrClick
     end
+    object BtnSizeOfProc: TButton
+      Left = 8
+      Top = 116
+      Width = 185
+      Height = 25
+      Caption = 'Size of proc'
+      TabOrder = 11
+      OnClick = BtnSizeOfProcClick
+    end
   end
 end

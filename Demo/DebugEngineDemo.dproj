@@ -148,6 +148,7 @@
         <DCCReference Include="..\Common\UnivDisasm\UnivDisasm.Syntax.Utils.pas"/>
         <DCCReference Include="..\Common\UnivDisasm\UnivDisasm.SyntaxManager.pas"/>
         <DCCReference Include="..\Common\UnivDisasm\UnivDisasm.Utils.pas"/>
+        <DCCReference Include="..\Source\DebugEngine.ThreadUtils.pas"/>
         <BuildConfiguration Include="Release">
             <Key>Cfg_2</Key>
             <CfgParent>Base</CfgParent>
