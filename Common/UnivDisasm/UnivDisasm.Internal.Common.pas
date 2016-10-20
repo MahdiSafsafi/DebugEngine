@@ -371,6 +371,10 @@ begin
     PInst^.Arg1.Reg := (REGS_GP or (PInst^.InternalData.OpSizeV shl 8) or PInst^.ModRm.Value.Rm or PInst^.Fields.B);
   end;
   DS := SegOrDef(PInst, SEG_DS);
+{$IFDEF CPUX64}
+  if DS = 0 then
+    DS := SEG_DS;
+{$ENDIF CPUX64}
   if Assigned(PInst^.VirtualAddr) then
     VA := PInst^.VirtualAddr + (PInst^.NextInst - PInst^.Addr)
   else
