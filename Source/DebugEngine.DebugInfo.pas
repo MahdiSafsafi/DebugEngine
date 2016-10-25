@@ -501,7 +501,7 @@ var
   GlobalModules: TModules = nil;
 
   GlobalLock: TObject = nil;
-
+  RegxLock: TObject = nil;
   RegularExpressionsCompiled: Boolean = False;
 
   { Hint Regular expressions for TCustomTxtMapParser parser. }
@@ -521,35 +521,46 @@ var
 
 procedure CompileRegularExpressions;
 begin
+  if RegularExpressionsCompiled then
+    Exit;
+
+  HintSegmentRegEx := TRegEx.Create(HintSegmentRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
+  HintUnitRegEx := TRegEx.Create(HintUnitRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
+  HintPublicsByNameRegEx := TRegEx.Create(HintPublicsByNameRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
+  HintPublicsByValueRegEx := TRegEx.Create(HintPublicsByValueRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
+
+  SegmentRegEx := TRegEx.Create(SegmentRegExPattern, [roCompiled, roSingleLine]);
+  UnitRegEx := TRegEx.Create(UnitRegExPattern, [roCompiled, roSingleLine]);
+  SymbolRegEx := TRegEx.Create(SymbolRegExPattern, [roCompiled, roSingleLine]);
+  LocationRegEx := TRegEx.Create(LocationRegExPattern, [roCompiled, roSingleLine]);
+  LineRegEx := TRegEx.Create(LineRegExPattern, [roCompiled, roSingleLine]);
+
+  RegularExpressionsCompiled := True;
+end;
+
+procedure NeedGlobalModules;
+begin
+  if Assigned(GlobalModules) then
+    Exit;
   TMonitor.Enter(GlobalLock);
   try
-    HintSegmentRegEx := TRegEx.Create(HintSegmentRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-    HintUnitRegEx := TRegEx.Create(HintUnitRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-    HintPublicsByNameRegEx := TRegEx.Create(HintPublicsByNameRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-    HintPublicsByValueRegEx := TRegEx.Create(HintPublicsByValueRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-
-    SegmentRegEx := TRegEx.Create(SegmentRegExPattern, [roCompiled, roSingleLine]);
-    UnitRegEx := TRegEx.Create(UnitRegExPattern, [roCompiled, roSingleLine]);
-    SymbolRegEx := TRegEx.Create(SymbolRegExPattern, [roCompiled, roSingleLine]);
-    LocationRegEx := TRegEx.Create(LocationRegExPattern, [roCompiled, roSingleLine]);
-    LineRegEx := TRegEx.Create(LineRegExPattern, [roCompiled, roSingleLine]);
-
-    RegularExpressionsCompiled := True;
+    if not Assigned(GlobalModules) then
+      GlobalModules := TModules.Create;
   finally
     TMonitor.Exit(GlobalLock);
   end;
 end;
 
-procedure NeedGlobalModules; inline;
+procedure NeedCompiledRegularExpressions;
 begin
-  if not Assigned(GlobalModules) then
-    GlobalModules := TModules.Create;
-end;
-
-procedure NeedCompiledRegularExpressions; inline;
-begin
-  if not RegularExpressionsCompiled then
+  if RegularExpressionsCompiled then
+    Exit; // No need to enter the lock.
+  TMonitor.Enter(RegxLock);
+  try
     CompileRegularExpressions;
+  finally
+    TMonitor.Exit(RegxLock);
+  end;
 end;
 
 {$ENDREGION 'GLOBAL'}
@@ -558,23 +569,18 @@ function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TA
 var
   LModule: TModule;
 begin
-  TMonitor.Enter(GlobalLock);
+  NeedGlobalModules;
   try
-    NeedGlobalModules;
-    try
-      LModule := GlobalModules.ModuleFromAddress[Address];
-      if Assigned(LModule) and Assigned(LModule.DebugInfo) then
-      begin
-        Result := LModule.DebugInfo.GetAddressInfo(Address, Info, Mask);
-        Exit;
-      end;
-    except
-      // Do nothing.
+    LModule := GlobalModules.ModuleFromAddress[Address];
+    if Assigned(LModule) and Assigned(LModule.DebugInfo) then
+    begin
+      Result := LModule.DebugInfo.GetAddressInfo(Address, Info, Mask);
+      Exit;
     end;
-    Result := False;
-  finally
-    TMonitor.Exit(GlobalLock);
+  except
+    // Do nothing.
   end;
+  Result := False;
 end;
 
 function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
@@ -584,15 +590,11 @@ begin
   Result := nil;
   if ModuleHandle = 0 then
     ModuleHandle := GetModuleHandle(nil);
-  TMonitor.Enter(GlobalLock);
-  try
-    NeedGlobalModules;
-    Module := GlobalModules.GetModuleFromModuleHandle(ModuleHandle, True);
-    if Assigned(Module) then
-      Result := Module.DebugInfo.GetSymbolAddress(UnitName, SymbolName);
-  finally
-    TMonitor.Exit(GlobalLock);
-  end;
+
+  NeedGlobalModules;
+  Module := GlobalModules.GetModuleFromModuleHandle(ModuleHandle, True);
+  if Assigned(Module) then
+    Result := Module.DebugInfo.GetSymbolAddress(UnitName, SymbolName);
 end;
 
 function GetNextSymbolAddress(Address: Pointer): Pointer;
@@ -1974,21 +1976,40 @@ begin
 end;
 
 function TModules.GetModuleFromModuleHandle(ModuleHandle: THandle; RegisterNoExists: Boolean): TModule;
-var
-  I: Integer;
+  function GetModule: TModule;
+  var
+    I: Integer;
+  begin
+    for I := 0 to FModulesList.Count - 1 do
+    begin
+      Result := FModulesList[I];
+      if Result.ModuleHandle = ModuleHandle then
+        Exit;
+    end;
+    Result := nil;
+  end;
+
 begin
   if ModuleHandle = 0 then
     Exit(nil);
-  for I := 0 to FModulesList.Count - 1 do
-  begin
-    Result := FModulesList[I];
-    if Result.ModuleHandle = ModuleHandle then
+
+  Result := GetModule;
+  if Assigned(Result) then
+    Exit;
+
+  TMonitor.Enter(GlobalLock);
+  try
+    { Try again => Maybe another thread had already registered the current module. }
+    Result := GetModule;
+    if Assigned(Result) then
       Exit;
+    if RegisterNoExists then
+      Result := AddModule(ModuleHandle)
+    else
+      Result := nil;
+  finally
+    TMonitor.Exit(GlobalLock);
   end;
-  if RegisterNoExists then
-    Result := AddModule(ModuleHandle)
-  else
-    Result := nil;
 end;
 
 {$ENDREGION 'DebugInfo'}
@@ -1999,11 +2020,15 @@ initialization
   ReportMemoryLeaksOnShutdown := True;
 {$ENDIF DEVMODE}
 GlobalLock := TObject.Create;
+RegxLock := TObject.Create;
 
 finalization
 
 if Assigned(GlobalLock) then
   GlobalLock.Free;
+
+if Assigned(RegxLock) then
+  RegxLock.Free;
 
 if Assigned(GlobalModules) then
   GlobalModules.Free;
