@@ -2004,9 +2004,7 @@ begin
     if Assigned(Result) then
       Exit;
     if RegisterNoExists then
-      Result := AddModule(ModuleHandle)
-    else
-      Result := nil;
+      Result := AddModule(ModuleHandle);
   finally
     TMonitor.Exit(GlobalLock);
   end;
