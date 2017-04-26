@@ -99,7 +99,8 @@ type
 
   PStackInfo = ^TStackInfo;
 
-  TEnumTryCallBack = function(var Info: TTryBlockInfo; UserData: Pointer): Boolean;
+  TEnumTryCallBack = function(var Info: TTryBlockInfo;
+    UserData: Pointer): Boolean;
 
   /// <summary> Get current thread stack info.
   /// </summary>
@@ -124,7 +125,8 @@ procedure GetDelphiExceptionHandlersPtr(var Info: THandlersPtr);
 /// <para></para>
 /// On x86-32, the function will return False.
 /// </remarks>
-function EnumTryBlocks(ModuleHandle: HMODULE; CallBackFunction: TEnumTryCallBack; UserData: Pointer): Boolean;
+function EnumTryBlocks(ModuleHandle: HMODULE;
+  CallBackFunction: TEnumTryCallBack; UserData: Pointer): Boolean;
 
 implementation
 
@@ -224,6 +226,8 @@ type
     So I implemented properties to access fields those originally used
     bit manipulation. }
 
+{$WARN UNSUPPORTED_CONSTRUCT OFF}
+
   [ExcludeField(Op)]
   _UNWIND_CODE = record
     (*
@@ -299,6 +303,7 @@ type
   TUnwindInfo = _UNWIND_INFO;
   PUnwindInfo = ^TUnwindInfo;
 
+{$WARN UNSUPPORTED_CONSTRUCT ON}
   { TUnwindInfo }
 
 function TUnwindInfo.GetFlags: Byte;
@@ -365,7 +370,8 @@ type
 
 {$ENDIF TABLE_BASED_EXCEPTIONS}
 
-function EnumTryBlocks(ModuleHandle: HMODULE; CallBackFunction: TEnumTryCallBack; UserData: Pointer): Boolean;
+function EnumTryBlocks(ModuleHandle: HMODULE;
+  CallBackFunction: TEnumTryCallBack; UserData: Pointer): Boolean;
 {$IFDEF TABLE_BASED_EXCEPTIONS}
 { TODO: Implement C_specific_handler. }
 
@@ -399,7 +405,8 @@ begin
   GetDelphiExceptionHandlersPtr(Handlers);
   DelphiExceptionHandlerPtr := Handlers.SEHandler;
   NtHeaders := PeMapImageNtHeaders64(Pointer(ModuleHandle));
-  with NtHeaders^.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXCEPTION] do
+  with NtHeaders^.OptionalHeader.DataDirectory
+    [IMAGE_DIRECTORY_ENTRY_EXCEPTION] do
   begin
     NumberOfRuntimeFunctions := Size div SizeOf(TRuntimeFunction);
     RtFunction := RvaToVa(VirtualAddress);
