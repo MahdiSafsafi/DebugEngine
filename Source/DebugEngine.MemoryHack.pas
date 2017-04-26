@@ -15,7 +15,7 @@
 //
 //
 // The Initial Developer of the Original Code is Mahdi Safsafi.
-// Portions created by Mahdi Safsafi . are Copyright (C) 2016 Mahdi Safsafi.
+// Portions created by Mahdi Safsafi . are Copyright (C) 2016-2017 Mahdi Safsafi.
 // All Rights Reserved.
 //
 // **************************************************************************************************

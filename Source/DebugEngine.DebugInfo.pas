@@ -15,7 +15,7 @@
 //
 //
 // The Initial Developer of the Original Code is Mahdi Safsafi.
-// Portions created by Mahdi Safsafi . are Copyright (C) 2016 Mahdi Safsafi.
+// Portions created by Mahdi Safsafi . are Copyright (C) 2016-2017 Mahdi Safsafi.
 // All Rights Reserved.
 //
 // **************************************************************************************************
@@ -56,7 +56,8 @@ type
   PSMapChar = PAnsiChar;
   SMapChar = AnsiChar;
 
-  TMapNotification = (mnNone, mnSegments, mnUnits, mnPublicsByName, mnPublicsByValue, mnLineLocations);
+  TMapNotification = (mnNone, mnSegments, mnUnits, mnPublicsByName,
+    mnPublicsByValue, mnLineLocations);
 
   { SMap options }
   TSMapOptions = set of (moCompress);
@@ -86,9 +87,12 @@ type
     NumberOfUnits: Word; // Number of units.
     NumberOfSymbols: DWORD; // Number of Symbols.
     NumberOfSourceLocations: Word; // Number of source locations.
-    OffsetToUnits: Cardinal; // Offset from header to first unit struct (TSMapUnit).
-    OffsetToSymbols: Cardinal; // Offset from header to first symbol struct (TSMapSymbol).
-    OffsetToSourceLocations: Cardinal; // Offset from header to first source location struct (TSMapSourceLocation).
+    OffsetToUnits: Cardinal;
+    // Offset from header to first unit struct (TSMapUnit).
+    OffsetToSymbols: Cardinal;
+    // Offset from header to first symbol struct (TSMapSymbol).
+    OffsetToSourceLocations: Cardinal;
+    // Offset from header to first source location struct (TSMapSourceLocation).
   end;
 
   PSMapHeader = ^TSMapHeader;
@@ -240,8 +244,10 @@ type
     /// <summary>
     /// All descendants class must implement this function.
     /// </summary>
-    function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; virtual; abstract;
-    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; virtual; abstract;
+    function GetAddressInfo(Address: Pointer; out Info: TAddressInfo;
+      Mask: TAddressInfoMask): Boolean; virtual; abstract;
+    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer;
+      virtual; abstract;
     function GetAddressFromIndex(Index: Integer): Pointer; virtual; abstract;
     constructor Create(Module: TModule); virtual;
     destructor Destroy; override;
@@ -263,8 +269,10 @@ type
   protected
     procedure CreateExportList;
   public
-    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
-    function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; override;
+    function GetSymbolAddress(const UnitName, SymbolName: string)
+      : Pointer; override;
+    function GetAddressInfo(Address: Pointer; out Info: TAddressInfo;
+      Mask: TAddressInfoMask): Boolean; override;
     function GetAddressFromIndex(Index: Integer): Pointer; override;
     constructor Create(Module: TModule); override;
     destructor Destroy; override;
@@ -292,13 +300,16 @@ type
     function GetRTSegmentFromSegIndex(SegIndex: Integer): PRuntimeSegment;
     function GetRTSegmentFromAddress(Address: Pointer): PRuntimeSegment;
     function GetUnit(Address: Pointer; PRtSeg: PRuntimeSegment): PSMapUnit;
-    function GetLineNumberSource(Address: Pointer; PRtSeg: PRuntimeSegment): PLineNumberSource;
+    function GetLineNumberSource(Address: Pointer; PRtSeg: PRuntimeSegment)
+      : PLineNumberSource;
   protected
     function UnZip: Boolean;
     function ProcessMap: Boolean; override;
   public
-    function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean; override;
-    function GetSymbolAddress(const UnitName, SymbolName: string): Pointer; override;
+    function GetAddressInfo(Address: Pointer; out Info: TAddressInfo;
+      Mask: TAddressInfoMask): Boolean; override;
+    function GetSymbolAddress(const UnitName, SymbolName: string)
+      : Pointer; override;
     function GetAddressFromIndex(Index: Integer): Pointer; override;
     constructor Create(Module: TModule); override;
     destructor Destroy; override;
@@ -308,13 +319,15 @@ type
   private
     FModulesList: TList;
     function GetModuleFromAddress(Address: Pointer): TModule;
-    function GetModuleFromModuleHandle(ModuleHandle: THandle; RegisterNoExists: Boolean): TModule;
+    function GetModuleFromModuleHandle(ModuleHandle: THandle;
+      RegisterNoExists: Boolean): TModule;
   protected
     function AddModule(ModuleHandle: THandle): TModule;
   public
     constructor Create; virtual;
     destructor Destroy; override;
-    property ModuleFromAddress[Address: Pointer]: TModule read GetModuleFromAddress;
+    property ModuleFromAddress[Address: Pointer]: TModule
+      read GetModuleFromAddress;
   end;
 
   TCustomTxtMapParser = class(TObject)
@@ -331,13 +344,19 @@ type
     /// <remarks> This function must be implemented in all descendants class.
     /// </remarks>
     function Notify(Notification: TMapNotification): Boolean; virtual; abstract;
-    procedure ProcessSegment(SegId: Integer; SegOffset: Cardinal; SegLength: Cardinal; const SegName, SegClass: string); virtual; abstract;
-    procedure ProcessUnit(SegId: Integer; UnitOffset: Cardinal; UnitLength: Cardinal; const SegClass, SegName, Group, UnitName: string; ACBP, ALIGN: Integer);
+    procedure ProcessSegment(SegId: Integer; SegOffset: Cardinal;
+      SegLength: Cardinal; const SegName, SegClass: string); virtual; abstract;
+    procedure ProcessUnit(SegId: Integer; UnitOffset: Cardinal;
+      UnitLength: Cardinal; const SegClass, SegName, Group, UnitName: string;
+      ACBP, ALIGN: Integer); virtual; abstract;
+    procedure ProcessPublicsByName(SegId: Integer; SymbolOffset: Cardinal;
+      const SymbolName: string); virtual; abstract;
+    procedure ProcessPublicsByValue(SegId: Integer; SymbolOffset: Cardinal;
+      const SymbolName: string); virtual; abstract;
+    procedure ProcessLocation(const UnitName, Source, SegmentName: string);
       virtual; abstract;
-    procedure ProcessPublicsByName(SegId: Integer; SymbolOffset: Cardinal; const SymbolName: string); virtual; abstract;
-    procedure ProcessPublicsByValue(SegId: Integer; SymbolOffset: Cardinal; const SymbolName: string); virtual; abstract;
-    procedure ProcessLocation(const UnitName, Source, SegmentName: string); virtual; abstract;
-    procedure ProcessLine(LineNumber, SegId, Offset: Integer); virtual; abstract;
+    procedure ProcessLine(LineNumber, SegId, Offset: Integer); virtual;
+      abstract;
   public
     /// <summary> Start parsing map file.
     /// </summary>
@@ -364,7 +383,8 @@ type
   /// </returns>
   /// <remarks> The converted map (SMAP) file will exist in the same MapFile folder.
   /// </remarks>
-function ConvertMapToSMap(const MapFile: string; const Options: TSMapOptions = [moCompress]): Integer; overload;
+function ConvertMapToSMap(const MapFile: string;
+  const Options: TSMapOptions = [moCompress]): Integer; overload;
 
 /// <summary>  Convert Delphi map data to SMAP data format.
 /// </summary>
@@ -382,7 +402,8 @@ function ConvertMapToSMap(const MapFile: string; const Options: TSMapOptions = [
 /// <remarks> It's true that the smap size will be less than the original map size.
 /// However, it's recommended to set DstPtr size equal to the SrcPtr size.
 /// </remarks>
-function ConvertMapToSMap(const SrcPtr, DstPtr: Pointer; Options: TSMapOptions): Integer; overload;
+function ConvertMapToSMap(const SrcPtr, DstPtr: Pointer; Options: TSMapOptions)
+  : Integer; overload;
 
 /// <summary> Convert Delphi map data to SMAP data format.
 /// </summary>
@@ -399,7 +420,8 @@ function ConvertMapToSMap(const SrcPtr, DstPtr: Pointer; Options: TSMapOptions):
 /// </returns>
 /// <remarks> The function sets DstStream size to the result.
 /// </remarks>
-function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream; Options: TSMapOptions): Integer; overload;
+function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream;
+  Options: TSMapOptions): Integer; overload;
 
 /// <summary> Retrieve address info.
 /// </summary>
@@ -414,7 +436,8 @@ function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream; Options: TSMapOpt
 /// </param>
 /// <returns> If the function succeeds, the return value is True.
 /// </returns>
-function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TAddressInfoMask = aimNone): Boolean;
+function GetAddressInfo(Address: Pointer; out Info: TAddressInfo;
+  const Mask: TAddressInfoMask = aimNone): Boolean;
 
 /// <summary> Retrieve address of symbol from symbol name.
 /// </summary>
@@ -432,7 +455,8 @@ function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TA
 /// <para> <c>UnitName</c> parameter is optional. It's useful when the symbol is declared in more than unit.
 /// </para>
 /// </remarks>
-function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
+function GetSymbolAddress(ModuleHandle: THandle;
+  const UnitName, SymbolName: string): Pointer;
 
 /// <summary> Retrieve next symbol address from the current symbol address.
 /// </summary>
@@ -481,7 +505,8 @@ end;
 {$ENDREGION 'InternalDebugUtils'}
 {$REGION 'GLOBAL'}
 const
-  PAGE_EXECUTE_MASK = PAGE_EXECUTE or PAGE_EXECUTE_READ or PAGE_EXECUTE_READWRITE or PAGE_EXECUTE_WRITECOPY;
+  PAGE_EXECUTE_MASK = PAGE_EXECUTE or PAGE_EXECUTE_READ or
+    PAGE_EXECUTE_READWRITE or PAGE_EXECUTE_WRITECOPY;
   { Regular expressions patterns used by TCustomTxtMapParser }
 
   HintSegmentRegExPattern = '^\s*Start\s+Length\s+Name\s+Class\s*$';
@@ -489,10 +514,13 @@ const
   HintPublicsByNameRegExPattern = '^\s*Address\s+Publics\s+by\s+Name\s*$';
   HintPublicsByValueRegExPattern = '^\s*Address\s+Publics\s+by\s+Value\s*$';
 
-  SegmentRegExPattern = '^\s(\d{4}):([0-9A-F]{8})\s([0-9A-F]{8})H\s(\.\w+)\s+(\w+)$';
-  UnitRegExPattern = '^\s(\d{4}):([0-9A-F]{8})\s([0-9A-F]{8})\sC=(\w+)\s+S=(\.\w+)\s+G=\(*(\w+)\)*\s+M=(\S+)(?:\s+(ALIGN|ACBP)=(\w+))*\s*$';
+  SegmentRegExPattern =
+    '^\s(\d{4}):([0-9A-F]{8})\s([0-9A-F]{8})H\s(\.\w+)\s+(\w+)$';
+  UnitRegExPattern =
+    '^\s(\d{4}):([0-9A-F]{8})\s([0-9A-F]{8})\sC=(\w+)\s+S=(\.\w+)\s+G=\(*(\w+)\)*\s+M=(\S+)(?:\s+(ALIGN|ACBP)=(\w+))*\s*$';
   SymbolRegExPattern = '^\s(\d{4}):([0-9A-F]{8})\s+(.+)$';
-  LocationRegExPattern = '^\s*^Line\snumbers\sfor\s(.+?)\((.+?)\)\ssegment\s+(\.\w+)\s*$';
+  LocationRegExPattern =
+    '^\s*^Line\snumbers\sfor\s(.+?)\((.+?)\)\ssegment\s+(\.\w+)\s*$';
   LineRegExPattern = '\s+(\d+)\s(\d{4}):([0-9A-F]{8})';
 
   { Place all global variables here ! }
@@ -524,15 +552,21 @@ begin
   if RegularExpressionsCompiled then
     Exit;
 
-  HintSegmentRegEx := TRegEx.Create(HintSegmentRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-  HintUnitRegEx := TRegEx.Create(HintUnitRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-  HintPublicsByNameRegEx := TRegEx.Create(HintPublicsByNameRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
-  HintPublicsByValueRegEx := TRegEx.Create(HintPublicsByValueRegExPattern, [roCompiled, roSingleLine, roIgnoreCase]);
+  HintSegmentRegEx := TRegEx.Create(HintSegmentRegExPattern,
+    [roCompiled, roSingleLine, roIgnoreCase]);
+  HintUnitRegEx := TRegEx.Create(HintUnitRegExPattern,
+    [roCompiled, roSingleLine, roIgnoreCase]);
+  HintPublicsByNameRegEx := TRegEx.Create(HintPublicsByNameRegExPattern,
+    [roCompiled, roSingleLine, roIgnoreCase]);
+  HintPublicsByValueRegEx := TRegEx.Create(HintPublicsByValueRegExPattern,
+    [roCompiled, roSingleLine, roIgnoreCase]);
 
-  SegmentRegEx := TRegEx.Create(SegmentRegExPattern, [roCompiled, roSingleLine]);
+  SegmentRegEx := TRegEx.Create(SegmentRegExPattern,
+    [roCompiled, roSingleLine]);
   UnitRegEx := TRegEx.Create(UnitRegExPattern, [roCompiled, roSingleLine]);
   SymbolRegEx := TRegEx.Create(SymbolRegExPattern, [roCompiled, roSingleLine]);
-  LocationRegEx := TRegEx.Create(LocationRegExPattern, [roCompiled, roSingleLine]);
+  LocationRegEx := TRegEx.Create(LocationRegExPattern,
+    [roCompiled, roSingleLine]);
   LineRegEx := TRegEx.Create(LineRegExPattern, [roCompiled, roSingleLine]);
 
   RegularExpressionsCompiled := True;
@@ -565,7 +599,8 @@ end;
 
 {$ENDREGION 'GLOBAL'}
 
-function GetAddressInfo(Address: Pointer; out Info: TAddressInfo; const Mask: TAddressInfoMask = aimNone): Boolean;
+function GetAddressInfo(Address: Pointer; out Info: TAddressInfo;
+  const Mask: TAddressInfoMask = aimNone): Boolean;
 var
   LModule: TModule;
 begin
@@ -583,7 +618,8 @@ begin
   Result := False;
 end;
 
-function GetSymbolAddress(ModuleHandle: THandle; const UnitName, SymbolName: string): Pointer;
+function GetSymbolAddress(ModuleHandle: THandle;
+  const UnitName, SymbolName: string): Pointer;
 var
   Module: TModule;
 begin
@@ -601,7 +637,8 @@ function GetNextSymbolAddress(Address: Pointer): Pointer;
 var
   Info: TAddressInfo;
 begin
-  if GetAddressInfo(Address, Info, aimAddress) and (Assigned(Info.DebugSource)) then
+  if GetAddressInfo(Address, Info, aimAddress) and (Assigned(Info.DebugSource))
+  then
   begin
     Result := Info.DebugSource.GetAddressFromIndex(Info.SymbolIndex + 1);
     Exit;
@@ -615,7 +652,8 @@ var
   NextAddress: Pointer;
 begin
   { SizeOfFunction = NextAdjacentAddress - StartAddress of the function. }
-  if (VirtualQuery(Address, mbi, SizeOf(TMemoryBasicInformation)) > 0) and (mbi.Protect and PAGE_EXECUTE_MASK <> $00) then
+  if (VirtualQuery(Address, mbi, SizeOf(TMemoryBasicInformation)) > 0) and
+    (mbi.Protect and PAGE_EXECUTE_MASK <> $00) then
   begin
     NextAddress := GetNextSymbolAddress(Address);
     if Assigned(NextAddress) then
@@ -648,9 +686,11 @@ begin
   Result := (Result + Alignment - 1) div Alignment * Alignment;
 end;
 
-function IsAddressInRange(Address: Pointer; const SegStartAddress, SegEndAddress: Pointer): Boolean;
+function IsAddressInRange(Address: Pointer;
+  const SegStartAddress, SegEndAddress: Pointer): Boolean;
 begin
-  Result := (NativeUInt(Address) >= NativeUInt(SegStartAddress)) and (NativeUInt(Address) < NativeUInt(SegEndAddress));
+  Result := (NativeUInt(Address) >= NativeUInt(SegStartAddress)) and
+    (NativeUInt(Address) < NativeUInt(SegEndAddress));
 end;
 
 function GetModuleFileName(Module: HMODULE): string;
@@ -679,7 +719,8 @@ var
 begin
   Result := EmptyStr;
   nSize := MAX_PATH - 1;
-  if WinApi.PsApi.GetModuleBaseName(GetCurrentProcess, Module, @Buffer[0], nSize) > 0 then
+  if WinApi.PsApi.GetModuleBaseName(GetCurrentProcess, Module, @Buffer[0],
+    nSize) > 0 then
     Result := String(PChar(@Buffer[0]));
 end;
 
@@ -687,7 +728,8 @@ function GetModuleHandleFromAddress(Address: Pointer): THandle;
 var
   mbi: TMemoryBasicInformation;
 begin
-  if (VirtualQuery(Address, mbi, SizeOf(TMemoryBasicInformation)) > 0) and (mbi.State = MEM_COMMIT) then
+  if (VirtualQuery(Address, mbi, SizeOf(TMemoryBasicInformation)) > 0) and
+    (mbi.State = MEM_COMMIT) then
     Exit(HMODULE(mbi.AllocationBase));
   Result := 0;
 end;
@@ -792,7 +834,9 @@ begin
       if Match.Success then
       begin
         with Match do
-          ProcessSegment(StrToInt(Groups[1].Value), StrToInt('$' + Groups[2].Value), StrToInt('$' + Groups[3].Value), Groups[4].Value, Groups[5].Value);
+          ProcessSegment(StrToInt(Groups[1].Value),
+            StrToInt('$' + Groups[2].Value), StrToInt('$' + Groups[3].Value),
+            Groups[4].Value, Groups[5].Value);
         Continue;
       end;
     end;
@@ -821,8 +865,10 @@ begin
             else if SameText(Groups[8].Value, 'ACBP') then
               ACBP := StrToInt('$' + Groups[9].Value);
           end;
-          ProcessUnit(StrToInt(Groups[1].Value), StrToInt('$' + Groups[2].Value), StrToInt('$' + Groups[3].Value), Groups[4].Value, Groups[5].Value,
-            Groups[6].Value, Groups[7].Value, ACBP, ALIGN);
+          ProcessUnit(StrToInt(Groups[1].Value),
+            StrToInt('$' + Groups[2].Value), StrToInt('$' + Groups[3].Value),
+            Groups[4].Value, Groups[5].Value, Groups[6].Value, Groups[7].Value,
+            ACBP, ALIGN);
         end;
         Continue;
       end;
@@ -842,7 +888,8 @@ begin
       if Match.Success then
       begin
         with Match do
-          ProcessPublicsByName(StrToInt(Groups[1].Value), StrToInt('$' + Groups[2].Value), Groups[3].Value);
+          ProcessPublicsByName(StrToInt(Groups[1].Value),
+            StrToInt('$' + Groups[2].Value), Groups[3].Value);
         Continue;
       end;
     end;
@@ -861,7 +908,8 @@ begin
       if Match.Success then
       begin
         with Match do
-          ProcessPublicsByValue(StrToInt(Groups[1].Value), StrToInt('$' + Groups[2].Value), Groups[3].Value);
+          ProcessPublicsByValue(StrToInt(Groups[1].Value),
+            StrToInt('$' + Groups[2].Value), Groups[3].Value);
         Continue;
       end;
     end;
@@ -889,7 +937,8 @@ begin
       for Match in Matches do
       begin
         with Match do
-          ProcessLine(StrToInt(Groups[1].Value), StrToInt(Groups[2].Value), StrToInt('$' + Groups[3].Value));
+          ProcessLine(StrToInt(Groups[1].Value), StrToInt(Groups[2].Value),
+            StrToInt('$' + Groups[3].Value));
       end;
     end;
   end;
@@ -898,31 +947,48 @@ end;
 {$ENDREGION 'MapParser'}
 {$REGION 'MapConverter'}
 
-const HintArrayLength = 4; HintArrayCharsLength = 8; MAX_SEGMENTS = 31; MAX_SEGMENT_UNITS = 1000;
+const
+  HintArrayLength = 4;
+  HintArrayCharsLength = 8;
+  MAX_SEGMENTS = 31;
+  MAX_SEGMENT_UNITS = 1000;
 
 type
-  THintArray = array [0 .. HintArrayLength - 1] of array [0 .. HintArrayCharsLength - 1] of SMapChar;
+  THintArray = array [0 .. HintArrayLength - 1] of array
+    [0 .. HintArrayCharsLength - 1] of SMapChar;
 
   { ==> First item is used as a cashe <==
     ==> Last item is used as segment's units count and not PSMapUnit !!! <== }
-  TSegmentsUnits = array [0 .. MAX_SEGMENTS - 1] of array [0 .. MAX_SEGMENT_UNITS] of PSMapUnit;
+  TSegmentsUnits = array [0 .. MAX_SEGMENTS - 1] of array
+    [0 .. MAX_SEGMENT_UNITS] of PSMapUnit;
   PSegmentsUnits = ^TSegmentsUnits;
 
-const CharToHexArray: array [SMapChar] of ShortInt = ( //
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, //
+const
+  CharToHexArray: array [SMapChar] of ShortInt = ( //
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, //
     $00, $01, $02, $03, $04, $05, $06, $07, $08, $09, //
     -1, -1, -1, -1, -1, -1, -1, //
-    $0A, $0B, $0C, $0D, $0E, $0F, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, $0A, $0B, $0C, $0D,
-    $0E, $0F, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1);
+    $0A, $0B, $0C, $0D, $0E, $0F, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, $0A, $0B, $0C,
+    $0D, $0E, $0F, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1);
 
-  HintSegArray: THintArray = ('Start', 'Length', 'Name', 'Class'); HintUnitArray: THintArray = ('Detailed', 'map', 'of', 'segments');
-  HintPublicsByValueArray: THintArray = ('Address', 'Publics', 'by', 'Value'); HintLineNumbersArray: THintArray = ('Line', 'numbers', 'for', '');
+  HintSegArray: THintArray = ('Start', 'Length', 'Name', 'Class');
+  HintUnitArray: THintArray = ('Detailed', 'map', 'of', 'segments');
+  HintPublicsByValueArray: THintArray = ('Address', 'Publics', 'by', 'Value');
+  HintLineNumbersArray: THintArray = ('Line', 'numbers', 'for', '');
 
-function ConvertMapToSMap(const SrcPtr, DstPtr: Pointer; Options: TSMapOptions): Integer;
+function ConvertMapToSMap(const SrcPtr, DstPtr: Pointer;
+  Options: TSMapOptions): Integer;
 var
   LCurrPos: PSMapChar;
   PSegsUnits: PSegmentsUnits;
@@ -1033,7 +1099,8 @@ begin
     Version := SMapVersion;
     Flags := SMapOptionsToRaw(Options);
   end;
-  PSegment := PSMapSegment(PByte(PHeader) + SizeOf(TSMapHeader)); // First segment.
+  PSegment := PSMapSegment(PByte(PHeader) + SizeOf(TSMapHeader));
+  // First segment.
 
   { Initialize datas and make the compiler happy :) }
   PUnit := nil;
@@ -1090,7 +1157,8 @@ begin
           Inc(LCurrPos);
         UnitLength := ReadHexValue;
         { Go to unit name. }
-        while not((LCurrPos^ = ' ') and ((LCurrPos + 1)^ = 'M') and ((LCurrPos + 2)^ = '=')) do
+        while not((LCurrPos^ = ' ') and ((LCurrPos + 1)^ = 'M') and
+          ((LCurrPos + 2)^ = '=')) do
           Inc(LCurrPos);
         Inc(LCurrPos, 3); // Skip " M=".
         L := 0;
@@ -1114,7 +1182,8 @@ begin
 
   NextBeginOfLine;
   PSymbol := PSMapSymbol(PUnit);
-  PHeader^.OffsetToSymbols := Cardinal(NativeUInt(PSymbol) - NativeUInt(PHeader));
+  PHeader^.OffsetToSymbols :=
+    Cardinal(NativeUInt(PSymbol) - NativeUInt(PHeader));
   while LCurrPos^ = '0' do
   begin
     Inc(PHeader^.NumberOfSymbols);
@@ -1145,7 +1214,8 @@ begin
   end;
 
   PSrc := PSMapSourceLocation(PSymbol);
-  PHeader^.OffsetToSourceLocations := Cardinal(NativeUInt(PSrc) - NativeUInt(PHeader));
+  PHeader^.OffsetToSourceLocations :=
+    Cardinal(NativeUInt(PSrc) - NativeUInt(PHeader));
 
   while (LCurrPos^ = 'L') // Limit ReachedHint call !
     and (ReachedHint(HintLineNumbersArray)) do
@@ -1160,6 +1230,7 @@ begin
     Move(LCurrPos^, Pointer(@PSrc^.SourceLocation[0])^, L);
     Inc(LCurrPos, L);
     PSrc^.SourceLocationLength := L;
+
     PLine := PSMapLineNumber(PByte(PSrc) + SizeOf(TSMapSourceLocation) + L);
     NextBeginOfLine;
     while LCurrPos^ in ['0' .. '9'] do
@@ -1189,7 +1260,6 @@ begin
   { Calculate new smap size before compression. }
   Result := Integer(NativeUInt(PLine) - NativeUInt(PHeader));
   PTmpHeader^.Size := Result + SizeOf(TSMapHeader);
-
   if moCompress in Options then
   begin
     { Compress smap. }
@@ -1205,7 +1275,8 @@ begin
   Result := ((Result + 3) div 4) * 4;
 end;
 
-function ConvertMapToSMap(const MapFile: string; const Options: TSMapOptions = [moCompress]): Integer;
+function ConvertMapToSMap(const MapFile: string;
+  const Options: TSMapOptions = [moCompress]): Integer;
 var
   hSrcFile: THandle;
   hDstFile: THandle;
@@ -1219,7 +1290,8 @@ begin
   Result := 0;
   if not FileExists(MapFile) then
     Exit;
-  hSrcFile := CreateFile(PChar(MapFile), GENERIC_READ, FILE_SHARE_READ, nil, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+  hSrcFile := CreateFile(PChar(MapFile), GENERIC_READ, FILE_SHARE_READ, nil,
+    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if hSrcFile <> INVALID_HANDLE_VALUE then
   begin
     fs := GetFileSize(hSrcFile, nil);
@@ -1230,13 +1302,17 @@ begin
       if Assigned(SrcMapAddress) then
       begin
         NewFileName := ChangeFileExt(MapFile, SMapFileExtension);
-        hDstFile := CreateFile(PChar(NewFileName), GENERIC_READ or GENERIC_WRITE, FILE_SHARE_READ, nil, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, 0);
+        hDstFile := CreateFile(PChar(NewFileName), GENERIC_READ or
+          GENERIC_WRITE, FILE_SHARE_READ, nil, CREATE_ALWAYS,
+          FILE_ATTRIBUTE_NORMAL, 0);
         if hDstFile <> INVALID_HANDLE_VALUE then
         begin
-          DstMapObj := CreateFileMapping(hDstFile, nil, PAGE_READWRITE, 0, fs, nil);
+          DstMapObj := CreateFileMapping(hDstFile, nil, PAGE_READWRITE,
+            0, fs, nil);
           if DstMapObj <> 0 then
           begin
-            DstMapAddress := MapViewOfFile(DstMapObj, FILE_MAP_READ or FILE_MAP_WRITE, 0, 0, 0);
+            DstMapAddress := MapViewOfFile(DstMapObj, FILE_MAP_READ or
+              FILE_MAP_WRITE, 0, 0, 0);
             if Assigned(DstMapAddress) then
             begin
               Result := ConvertMapToSMap(SrcMapAddress, DstMapAddress, Options);
@@ -1259,7 +1335,8 @@ begin
   end;
 end;
 
-function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream; Options: TSMapOptions): Integer;
+function ConvertMapToSMap(SrcStream, DstStream: TMemoryStream;
+  Options: TSMapOptions): Integer;
 begin
   if (not Assigned(SrcStream)) or (not Assigned(DstStream)) then
     Exit(0);
@@ -1385,7 +1462,8 @@ var
   MapFileName: string;
 begin
   { SDEBUG }
-  if Assigned(PeFindSection(PeMapImageNtHeaders(Pointer(FModule)), SDebugSection)) then
+  if Assigned(PeFindSection(PeMapImageNtHeaders(Pointer(FModule)),
+    SDebugSection)) then
     Exit(mlSection);
 
   { SMAP }
@@ -1518,13 +1596,15 @@ begin
     PRtSegment := GetRTSegmentFromSegIndex(PSymbol^.SymbolSegId);
     if not Assigned(PRtSegment) then
       Exit(nil);
-    Result := Pointer(NativeUInt(PRtSegment^.SegStartAddress) + PSymbol^.SymbolOffset);
+    Result := Pointer(NativeUInt(PRtSegment^.SegStartAddress) +
+      PSymbol^.SymbolOffset);
     Exit;
   end;
   Result := nil;
 end;
 
-function TDebugInfoSMap.GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean;
+function TDebugInfoSMap.GetAddressInfo(Address: Pointer; out Info: TAddressInfo;
+  Mask: TAddressInfoMask): Boolean;
 var
   PRtSeg: PRuntimeSegment;
   PSymbol: PSMapSymbol;
@@ -1543,8 +1623,10 @@ begin
     PSymbol := FSymbols[I];
     if PSymbol^.SymbolSegId = PRtSeg^.SegId then
     begin
-      SymbolAddress := Pointer(PByte(PRtSeg^.SegStartAddress) + PSymbol^.SymbolOffset);
-      if (NativeUInt(SymbolAddress) < NativeUInt(PRtSeg^.SegEndAddress)) and (NativeUInt(Address) >= NativeUInt(SymbolAddress)) then
+      SymbolAddress := Pointer(PByte(PRtSeg^.SegStartAddress) +
+        PSymbol^.SymbolOffset);
+      if (NativeUInt(SymbolAddress) < NativeUInt(PRtSeg^.SegEndAddress)) and
+        (NativeUInt(Address) >= NativeUInt(SymbolAddress)) then
       begin
         Result := True;
         FillChar(Info, SizeOf(Info), #00);
@@ -1568,7 +1650,8 @@ begin
         begin
           Info.LineNumber := PLineSource^.Line^.LineNumber;
           PSourceLocation := PLineSource^.Source;
-          Info.SourceLocation := string(PSMapChar(@PSourceLocation^.SourceLocation[0]));
+          Info.SourceLocation :=
+            string(PSMapChar(@PSourceLocation^.SourceLocation[0]));
           SetLength(Info.SourceLocation, PSourceLocation^.SourceLocationLength);
         end;
         Exit;
@@ -1577,7 +1660,8 @@ begin
   end;
 end;
 
-function TDebugInfoSMap.GetLineNumberSource(Address: Pointer; PRtSeg: PRuntimeSegment): PLineNumberSource;
+function TDebugInfoSMap.GetLineNumberSource(Address: Pointer;
+  PRtSeg: PRuntimeSegment): PLineNumberSource;
 var
   LineNumberAddress: NativeUInt;
   I: Integer;
@@ -1587,7 +1671,8 @@ begin
     Result := FLineSources[I];
     if Result^.Source^.SegId = PRtSeg^.SegId then
     begin
-      LineNumberAddress := NativeUInt(PRtSeg^.SegStartAddress) + Result^.Line^.Offset;
+      LineNumberAddress := NativeUInt(PRtSeg^.SegStartAddress) +
+        Result^.Line^.Offset;
       if NativeUInt(Address) >= NativeUInt(LineNumberAddress) then
         Exit;
     end;
@@ -1595,7 +1680,8 @@ begin
   Result := nil;
 end;
 
-function TDebugInfoSMap.GetRTSegmentFromAddress(Address: Pointer): PRuntimeSegment;
+function TDebugInfoSMap.GetRTSegmentFromAddress(Address: Pointer)
+  : PRuntimeSegment;
 var
   I: Integer;
 begin
@@ -1603,13 +1689,15 @@ begin
   begin
     Result := FRTSegments[I];
     with Result^ do
-      if Assigned(Result) and IsAddressInRange(Address, SegStartAddress, SegEndAddress) then
+      if Assigned(Result) and IsAddressInRange(Address, SegStartAddress,
+        SegEndAddress) then
         Exit;
   end;
   Result := nil;
 end;
 
-function TDebugInfoSMap.GetRTSegmentFromSegIndex(SegIndex: Integer): PRuntimeSegment;
+function TDebugInfoSMap.GetRTSegmentFromSegIndex(SegIndex: Integer)
+  : PRuntimeSegment;
 var
   I: Integer;
 begin
@@ -1622,7 +1710,8 @@ begin
   Result := nil;
 end;
 
-function TDebugInfoSMap.GetSymbolAddress(const UnitName, SymbolName: string): Pointer;
+function TDebugInfoSMap.GetSymbolAddress(const UnitName,
+  SymbolName: string): Pointer;
 var
   I: Integer;
   PSymbol: PSMapSymbol;
@@ -1640,7 +1729,8 @@ begin
       RtSeg := GetRTSegmentFromSegIndex(PSymbol^.SymbolSegId);
       if Assigned(RtSeg) then
       begin
-        Result := Pointer(NativeUInt(RtSeg^.SegStartAddress) + PSymbol^.SymbolOffset);
+        Result := Pointer(NativeUInt(RtSeg^.SegStartAddress) +
+          PSymbol^.SymbolOffset);
         if UnitName <> EmptyStr then
         begin
           PUnit := GetUnit(Result, RtSeg);
@@ -1660,7 +1750,8 @@ begin
   end;
 end;
 
-function TDebugInfoSMap.GetUnit(Address: Pointer; PRtSeg: PRuntimeSegment): PSMapUnit;
+function TDebugInfoSMap.GetUnit(Address: Pointer; PRtSeg: PRuntimeSegment)
+  : PSMapUnit;
 var
   I: Integer;
 begin
@@ -1668,7 +1759,8 @@ begin
   begin
     Result := FUnits[I];
     with Result^, PRtSeg^ do
-      if (UnitSegId = SegId) and IsAddressInRange(Address, Pointer(NativeUInt(SegStartAddress) + UnitOffset),
+      if (UnitSegId = SegId) and IsAddressInRange(Address,
+        Pointer(NativeUInt(SegStartAddress) + UnitOffset),
         Pointer(NativeUInt(SegStartAddress) + UnitOffset + UnitLength)) then
         Exit;
   end;
@@ -1677,9 +1769,11 @@ end;
 
 function LineSortCompare(Item1, Item2: Pointer): Integer;
 begin
-  Result := NativeUInt(PLineNumberSource(Item1)^.Source^.SegId) - NativeUInt(PLineNumberSource(Item2)^.Source^.SegId);
+  Result := NativeUInt(PLineNumberSource(Item1)^.Source^.SegId) -
+    NativeUInt(PLineNumberSource(Item2)^.Source^.SegId);
   if Result = 0 then
-    Result := NativeUInt(PLineNumberSource(Item1)^.Line^.Offset) - NativeUInt(PLineNumberSource(Item2)^.Line^.Offset);
+    Result := NativeUInt(PLineNumberSource(Item1)^.Line^.Offset) -
+      NativeUInt(PLineNumberSource(Item2)^.Line^.Offset);
 end;
 
 function TDebugInfoSMap.ProcessMap: Boolean;
@@ -1694,8 +1788,11 @@ var
     Result^.SegLength := PSegment^.SegLength;
     { Module could be loaded at a different address space
       specified by Delphi. So we need to fix segment start address. }
-    Result^.SegStartAddress := Pointer((PSegment^.SegStartAddress - LModuleImageBase) + FModule.ModuleHandle);
-    Result^.SegEndAddress := Pointer(PByte(Result^.SegStartAddress) + Result^.SegLength);
+    Result^.SegStartAddress :=
+      Pointer((PSegment^.SegStartAddress - LModuleImageBase) +
+      FModule.ModuleHandle);
+    Result^.SegEndAddress := Pointer(PByte(Result^.SegStartAddress) +
+      Result^.SegLength);
 
     if not FModule.IsAddressInModuleRange(Result^.SegStartAddress) then
     begin
@@ -1729,8 +1826,10 @@ begin
     PSegment := PSMapSegment(PByte(PHeader) + SizeOf(TSMapHeader));
     PUnit := PSMapUnit(PByte(PHeader) + PHeader^.OffsetToUnits);
     PSymbol := PSMapSymbol(PByte(PHeader) + PHeader^.OffsetToSymbols);
-    PSource := PSMapSourceLocation(PByte(PHeader) + PHeader^.OffsetToSourceLocations);
-    PLine := PSMapLineNumber(PByte(PSource) + SizeOf(TSMapSourceLocation) + PSource^.SourceLocationLength);
+    PSource := PSMapSourceLocation(PByte(PHeader) +
+      PHeader^.OffsetToSourceLocations);
+    PLine := PSMapLineNumber(PByte(PSource) + SizeOf(TSMapSourceLocation) +
+      PSource^.SourceLocationLength);
 
     { ===> Segments <=== }
     for I := 1 to PHeader^.NumberOfSegments do
@@ -1742,13 +1841,15 @@ begin
     for I := 1 to PHeader^.NumberOfUnits do
     begin
       FUnits.Add(PUnit);
-      PUnit := PSMapUnit(PByte(PUnit) + SizeOf(TSMapUnit) + PUnit^.UnitNameLength);
+      PUnit := PSMapUnit(PByte(PUnit) + SizeOf(TSMapUnit) +
+        PUnit^.UnitNameLength);
     end;
     { ===> Symbols <=== }
     for I := 1 to PHeader^.NumberOfSymbols do
     begin
       FSymbols.Add(PSymbol);
-      PSymbol := PSMapSymbol(PByte(PSymbol) + SizeOf(TSMapSymbol) + PSymbol^.SymbolNameLength);
+      PSymbol := PSMapSymbol(PByte(PSymbol) + SizeOf(TSMapSymbol) +
+        PSymbol^.SymbolNameLength);
     end;
     { ===> SourceLocations & LineNumber <=== }
     for I := 1 to PHeader^.NumberOfSourceLocations do
@@ -1762,7 +1863,8 @@ begin
         Inc(PLine);
       end;
       PSource := Pointer(PLine);
-      PLine := PSMapLineNumber(PByte(PSource) + SizeOf(TSMapSourceLocation) + PSource^.SourceLocationLength);
+      PLine := PSMapLineNumber(PByte(PSource) + SizeOf(TSMapSourceLocation) +
+        PSource^.SourceLocationLength);
     end;
     FLineSources.Sort(LineSortCompare);
   end;
@@ -1791,14 +1893,16 @@ begin
   FreeMem(Buffer);
   { Check if size of decompressed data = size of original smap before it gets compressed. }
   Inc(BufferSize, SizeOf(TSMapHeader));
-  Result := Integer(SMapHeader.Size) = BufferSize; // ZDecompress uses size as signed !
+  Result := Integer(SMapHeader.Size) = BufferSize;
+  // ZDecompress uses size as signed !
 end;
 
 { TDebugInfoExport }
 
 function ExportFunctionsSortCompare(Item1, Item2: Pointer): Integer;
 begin
-  Result := NativeUInt(TDebugInfoExport.PExportInfo(Item1)^.Address) - NativeUInt(TDebugInfoExport.PExportInfo(Item2)^.Address);
+  Result := NativeUInt(TDebugInfoExport.PExportInfo(Item1)^.Address) -
+    NativeUInt(TDebugInfoExport.PExportInfo(Item2)^.Address);
 end;
 
 constructor TDebugInfoExport.Create(Module: TModule);
@@ -1846,8 +1950,10 @@ var
   I: Integer;
 begin
   NtHeaders := PeMapImageNtHeaders(Pointer(FModule.ModuleHandle));
-  ExportSize := NtHeaders^.OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
-  EntryData := ImageDirectoryEntryToData(Pointer(FModule.ModuleHandle), True, IMAGE_DIRECTORY_ENTRY_EXPORT, ExportSize);
+  ExportSize := NtHeaders^.OptionalHeader.DataDirectory
+    [IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
+  EntryData := ImageDirectoryEntryToData(Pointer(FModule.ModuleHandle), True,
+    IMAGE_DIRECTORY_ENTRY_EXPORT, ExportSize);
 
   if not Assigned(EntryData) then
     Exit;
@@ -1900,7 +2006,8 @@ begin
   Result := nil;
 end;
 
-function TDebugInfoExport.GetAddressInfo(Address: Pointer; out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean;
+function TDebugInfoExport.GetAddressInfo(Address: Pointer;
+  out Info: TAddressInfo; Mask: TAddressInfoMask): Boolean;
 var
   I: Integer;
   ExportInfo: PExportInfo;
@@ -1920,7 +2027,8 @@ begin
         if Mask = aimAddress then
           Exit;
         if ExportInfo^.Name.IsEmpty then
-          Info.SymbolName := ChangeFileExt(FModule.FBaseName, '.') + IntToStr(ExportInfo^.Hint)
+          Info.SymbolName := ChangeFileExt(FModule.FBaseName, '.') +
+            IntToStr(ExportInfo^.Hint)
         else
           Info.SymbolName := ExportInfo^.Name;
         Exit;
@@ -1930,7 +2038,8 @@ begin
   Result := False;
 end;
 
-function TDebugInfoExport.GetSymbolAddress(const UnitName, SymbolName: string): Pointer;
+function TDebugInfoExport.GetSymbolAddress(const UnitName,
+  SymbolName: string): Pointer;
 var
   I: Integer;
   PExport: PExportInfo;
@@ -1975,7 +2084,8 @@ begin
   Result := GetModuleFromModuleHandle(ModuleHandle, True);
 end;
 
-function TModules.GetModuleFromModuleHandle(ModuleHandle: THandle; RegisterNoExists: Boolean): TModule;
+function TModules.GetModuleFromModuleHandle(ModuleHandle: THandle;
+  RegisterNoExists: Boolean): TModule;
   function GetModule: TModule;
   var
     I: Integer;
