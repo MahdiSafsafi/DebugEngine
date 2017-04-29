@@ -1535,8 +1535,7 @@ begin
         begin
           { Avoid calling IsReturnAddresInEbpFrame function ! }
           Rank := RANK_HIGH;
-        end
-        else if IsReturnAddresInEbpFrame(StackPtr) then
+        end else if IsReturnAddresInEbpFrame(StackPtr) then
           Rank := RANK_HIGH;
         cIndex := FCalls.Add(PItem);
       end;
@@ -1576,8 +1575,7 @@ begin
     if Assigned(PCaller) then
     begin
       L := PCaller^.iIndex;
-    end
-    else if ((not PItem^.OutOfRange) and FunctionHasFrame(PItem^.Info.ProcedureAddress)) then
+    end else if ((not PItem^.OutOfRange) and FunctionHasFrame(PItem^.Info.ProcedureAddress)) then
     begin
       PFrame := GetItemEbpFrame(PItem);
       if AddressInStackRange(PFrame^.CallerFrame) then
@@ -1831,7 +1829,7 @@ procedure TCallTrace32.RemoveSealedCalls;
       for I := Index downto 0 do
       begin
         PItem := FCalls[I];
-        if (PItem^.IsValid) and (not PItem^.OutOfRange) and (PPointer(PItem^.Info.ProcedureAddress)^ = Address) then
+        if (PItem^.IsValid) and (not PItem^.OutOfRange) and (Assigned(PItem^.Info.ProcedureAddress)) and (PPointer(PItem^.Info.ProcedureAddress)^ = Address) then
           Exit(True);
       end;
       Result := False;
