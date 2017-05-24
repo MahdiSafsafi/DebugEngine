@@ -1,6 +1,6 @@
 # DebugEngine
 ## What is DebugEngine ?
-DebugEngine is a collection of utils related to debug stuff (stack trace, CPU registers snaphot, debug info,...).
+DebugEngine is a collection of utilities related to debug stuff (stack trace, CPU registers snapshot, debug info, ...).
 Basically, I started to write a commercial error log plugin for Delphi, then I noticed that my internal framework got bigger and bigger. So I decided to share it with the community in hope it will be useful.
 
 ## Features:
