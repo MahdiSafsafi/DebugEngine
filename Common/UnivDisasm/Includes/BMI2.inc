@@ -16,7 +16,7 @@
 // The Original Code is BMI2.inc
 //
 // The Initial Developer of the Original Code is Mahdi Safsafi.
-// Portions created by Mahdi Safsafi . are Copyright (C) 2015 Mahdi Safsafi.
+// Portions created by Mahdi Safsafi . are Copyright (C) 2015-2019 Mahdi Safsafi.
 // All Rights Reserved.
 // *************************************************************************** //
 //

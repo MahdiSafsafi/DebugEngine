@@ -2,7 +2,7 @@
 
 {$DEFINE UNIVDISASM_CONFIG}
 
-{.$DEFINE NEED_DISPLAY} // Undef if you don't want to have instruction str.
+{$DEFINE NEED_DISPLAY} // Undef if you don't want to have instruction str.
 
 {$DEFINE MustInline}  // Delphi will inline small functions if MustInline defined.   
 
