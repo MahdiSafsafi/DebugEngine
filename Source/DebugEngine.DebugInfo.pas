@@ -89,7 +89,7 @@ type
     NumberOfSegments: Byte; // Number of segments.
     NumberOfUnits: Word; // Number of units.
     NumberOfSymbols: DWORD; // Number of Symbols.
-    NumberOfSourceLocations: Word; // Number of source locations.
+    NumberOfSourceLocations: DWORD; // Number of source locations.
     OffsetToUnits: Cardinal; // Offset from header to first unit struct (TSMapUnit).
     OffsetToSymbols: Cardinal; // Offset from header to first symbol struct (TSMapSymbol).
     OffsetToSourceLocations: Cardinal; // Offset from header to first source location struct (TSMapSourceLocation).
