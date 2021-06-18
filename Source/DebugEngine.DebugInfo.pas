@@ -129,7 +129,7 @@ type
 
   TSMapSourceLocation = packed record
     SegId: Byte;
-    NumberOfLineNumbers: Word;
+    NumberOfLineNumbers: DWORD;
     SourceLocationLength: Word;
     SourceLocation: array [0 .. 0] of SMapChar;
   end;
